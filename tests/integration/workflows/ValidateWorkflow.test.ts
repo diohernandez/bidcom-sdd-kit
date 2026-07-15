@@ -4,7 +4,9 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { PlanWorkflow } from '../../../src/core/workflows/dev/PlanWorkflow.js'
 import { ValidateWorkflow } from '../../../src/core/workflows/dev/ValidateWorkflow.js'
+import { renderMetaMd } from '../../../src/core/state/index.js'
 import type { SddConfig } from '../../../src/types/config.js'
+import type { StateData } from '../../../src/core/state/types.js'
 
 describe('core/workflows/dev/ValidateWorkflow', () => {
   let inputProjectPath: string
@@ -82,9 +84,13 @@ describe('core/workflows/dev/ValidateWorkflow', () => {
   })
 
   it('validates the technical spec once the feature is in "tecnico"', async () => {
-    const metaPath = path.join(inputProjectPath, '.sdd', 'wip', 'checkout-flow', 'meta.md')
-    const meta = await fs.readFile(metaPath, 'utf-8')
-    await fs.writeFile(metaPath, meta.replace('state: "funcional"', 'state: "tecnico"'))
+    const featurePath = path.join(inputProjectPath, '.sdd', 'wip', 'checkout-flow')
+    const statePath = path.join(featurePath, 'state.json')
+    const data = (await fs.readJson(statePath)) as StateData
+    data.state = 'tecnico'
+    data.last_updated = new Date().toISOString()
+    await fs.writeJson(statePath, data, { spaces: 2 })
+    await renderMetaMd(featurePath)
 
     const actualResult = await validateWorkflow.execute({
       featureName: 'checkout-flow',
@@ -108,10 +114,14 @@ describe('core/workflows/dev/ValidateWorkflow', () => {
     expect(actualResult.error).toMatch(/does-not-exist/)
   })
 
-  it('returns an error for a phase without content validation defined yet', async () => {
-    const metaPath = path.join(inputProjectPath, '.sdd', 'wip', 'checkout-flow', 'meta.md')
-    const meta = await fs.readFile(metaPath, 'utf-8')
-    await fs.writeFile(metaPath, meta.replace('state: "funcional"', 'state: "impl"'))
+  it('runs the implementation gate once the feature is in "impl"', async () => {
+    const featurePath = path.join(inputProjectPath, '.sdd', 'wip', 'checkout-flow')
+    const statePath = path.join(featurePath, 'state.json')
+    const data = (await fs.readJson(statePath)) as StateData
+    data.state = 'impl'
+    data.last_updated = new Date().toISOString()
+    await fs.writeJson(statePath, data, { spaces: 2 })
+    await renderMetaMd(featurePath)
 
     const actualResult = await validateWorkflow.execute({
       featureName: 'checkout-flow',
@@ -119,7 +129,8 @@ describe('core/workflows/dev/ValidateWorkflow', () => {
       config: inputConfig,
     })
 
+    expect(actualResult.phase).toBe('impl')
     expect(actualResult.success).toBe(false)
-    expect(actualResult.error).toMatch(/impl/)
+    expect(actualResult.checks?.some((check) => check.name === 'build' && !check.passed)).toBe(true)
   })
 })

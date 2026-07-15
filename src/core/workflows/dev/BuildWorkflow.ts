@@ -3,6 +3,7 @@ import fs from "fs-extra";
 import { fileExists } from "../../../utils/fs.js";
 import { parseFrontmatter } from "../../../utils/frontmatter.js";
 import type { SddConfig } from "../../../types/config.js";
+import type { StateData } from "../../../core/state/types.js";
 
 export interface BuildOptions {
   featureName: string;
@@ -31,18 +32,25 @@ export class BuildWorkflow {
   async execute(options: BuildOptions): Promise<BuildResult> {
     const { featureName, projectPath, config } = options;
     const featurePath = path.join(projectPath, config.wipPath, featureName);
+    const statePath = path.join(featurePath, "state.json");
     const metaPath = path.join(featurePath, "meta.md");
 
-    if (!(await fileExists(metaPath))) {
+    if (!(await fileExists(statePath)) && !(await fileExists(metaPath))) {
       return {
         success: false,
-        error: `El feature "${featureName}" no existe (falta ${metaPath})`,
+        error: `El feature "${featureName}" no existe (falta ${statePath})`,
       };
     }
 
-    const meta = await fs.readFile(metaPath, "utf-8");
-    const { data } = parseFrontmatter(meta);
-    const phase = typeof data.state === "string" ? data.state : undefined;
+    let phase: string | undefined;
+    if (await fileExists(statePath)) {
+      const data = (await fs.readJson(statePath)) as StateData;
+      phase = data.state;
+    } else {
+      const meta = await fs.readFile(metaPath, "utf-8");
+      const { data } = parseFrontmatter(meta);
+      phase = typeof data.state === "string" ? data.state : undefined;
+    }
 
     if (phase !== "impl") {
       return {

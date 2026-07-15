@@ -9,6 +9,7 @@ import { IntegrationPhase } from "../../core/workflows/reverse/phases/Integratio
 import { ComponentsPhase } from "../../core/workflows/reverse/phases/ComponentsPhase.js";
 import { DataFlowPhase } from "../../core/workflows/reverse/phases/DataFlowPhase.js";
 import { TestingPhase } from "../../core/workflows/reverse/phases/TestingPhase.js";
+import { SeedSpecsPhase } from "../../core/workflows/reverse/phases/SeedSpecsPhase.js";
 import { fileExists } from "../../utils/fs.js";
 import { getGitActor } from "../../utils/gitActor.js";
 import { requireConfig } from "../context.js";
@@ -38,6 +39,7 @@ const PHASE_CLASSES: Record<string, new () => AnalysisPhase> = {
   components: ComponentsPhase,
   "data-flow": DataFlowPhase,
   testing: TestingPhase,
+  "seed-specs": SeedSpecsPhase,
 };
 
 export function registerReverseCommand(program: Command): void {

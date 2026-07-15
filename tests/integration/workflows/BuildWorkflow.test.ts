@@ -4,7 +4,9 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { PlanWorkflow } from '../../../src/core/workflows/dev/PlanWorkflow.js'
 import { BuildWorkflow } from '../../../src/core/workflows/dev/BuildWorkflow.js'
+import { State, renderMetaMd } from '../../../src/core/state/index.js'
 import type { SddConfig } from '../../../src/types/config.js'
+import type { StateData } from '../../../src/core/state/types.js'
 
 describe('core/workflows/dev/BuildWorkflow', () => {
   let inputProjectPath: string
@@ -41,9 +43,13 @@ describe('core/workflows/dev/BuildWorkflow', () => {
   })
 
   async function setPhase(phase: string): Promise<void> {
-    const metaPath = path.join(inputProjectPath, '.sdd', 'wip', 'checkout-flow', 'meta.md')
-    const meta = await fs.readFile(metaPath, 'utf-8')
-    await fs.writeFile(metaPath, meta.replace('state: "funcional"', `state: "${phase}"`))
+    const featurePath = path.join(inputProjectPath, '.sdd', 'wip', 'checkout-flow')
+    const statePath = path.join(featurePath, 'state.json')
+    const data = (await fs.readJson(statePath)) as StateData
+    data.state = phase
+    data.last_updated = new Date().toISOString()
+    await fs.writeJson(statePath, data, { spaces: 2 })
+    await renderMetaMd(featurePath)
   }
 
   it('returns an error when the feature does not exist', async () => {

@@ -249,10 +249,12 @@ describe("cli", () => {
   it("build succeeds when the feature is in impl phase", async () => {
     await runCli(["init"]);
     await runCli(["plan", "ready-feature"]);
-    await fs.writeFile(
-      path.join(projectPath, ".sdd", "wip", "ready-feature", "meta.md"),
-      "---\nstate: impl\ncreated_at: 2026-07-15T00:00:00Z\ncreated_by: test\n---\n",
-    );
+    const featurePath = path.join(projectPath, ".sdd", "wip", "ready-feature");
+    const statePath = path.join(featurePath, "state.json");
+    const stateContent = await fs.readJson(statePath);
+    stateContent.state = "impl";
+    stateContent.last_updated = "2026-07-15T00:00:00Z";
+    await fs.writeJson(statePath, stateContent, { spaces: 2 });
 
     const result = await runCli(["build", "ready-feature"]);
 

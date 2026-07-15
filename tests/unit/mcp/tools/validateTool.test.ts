@@ -7,6 +7,8 @@ import { PlanWorkflow } from "../../../../src/core/workflows/dev/PlanWorkflow.js
 import { runValidateTool } from "../../../../src/mcp/tools/validateTool.js";
 import { getGitActor } from "../../../../src/utils/gitActor.js";
 import { loadConfig } from "../../../../src/utils/config.js";
+import { renderMetaMd } from "../../../../src/core/state/index.js";
+import type { StateData } from "../../../../src/core/state/types.js";
 
 function parseContract(result: Awaited<ReturnType<typeof runValidateTool>>) {
   const [content] = result.content as Array<{ type: "text"; text: string }>;
@@ -18,18 +20,13 @@ async function forcePhase(
   featureName: string,
   phase: string,
 ): Promise<void> {
-  const metaPath = path.join(
-    projectPath,
-    ".sdd",
-    "wip",
-    featureName,
-    "meta.md",
-  );
-  const meta = await fs.readFile(metaPath, "utf-8");
-  await fs.writeFile(
-    metaPath,
-    meta.replace(/state: "funcional"/, `state: "${phase}"`),
-  );
+  const featurePath = path.join(projectPath, ".sdd", "wip", featureName);
+  const statePath = path.join(featurePath, "state.json");
+  const data = (await fs.readJson(statePath)) as StateData;
+  data.state = phase;
+  data.last_updated = new Date().toISOString();
+  await fs.writeJson(statePath, data, { spaces: 2 });
+  await renderMetaMd(featurePath);
 }
 
 describe("runValidateTool", () => {
@@ -88,7 +85,7 @@ describe("runValidateTool", () => {
     });
   });
 
-  it("reports a precondition blocker when the phase has no content validation defined", async () => {
+  it("reports a build blocker when the implementation gate fails", async () => {
     await forcePhase(projectPath, "checkout-flow", "impl");
 
     const result = await runValidateTool(
@@ -102,8 +99,8 @@ describe("runValidateTool", () => {
     expect(contract.blockers).toEqual([
       {
         gate: "impl",
-        check: "precondition",
-        detail: expect.stringContaining("no tiene validación"),
+        check: "build",
+        detail: expect.stringContaining("No se detectó un script de build"),
       },
     ]);
   });

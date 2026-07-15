@@ -1023,6 +1023,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/tar@npm:^7.0.87":
+  version: 7.0.87
+  resolution: "@types/tar@npm:7.0.87"
+  dependencies:
+    tar: "npm:*"
+  checksum: 10c0/23243d293a9ae2cae647f39d56587f24bca947409d75afe9d44987d07dabca9e64ef2f5cb6cb561e14b6c2e1990c420f9d67ba27c9f73d0becd33595ec6464a5
+  languageName: node
+  linkType: hard
+
 "@types/yargs-parser@npm:*":
   version: 21.0.3
   resolution: "@types/yargs-parser@npm:21.0.3"
@@ -4128,6 +4137,7 @@ __metadata:
     "@types/fs-extra": "npm:^11.0.0"
     "@types/jest": "npm:^29.5.0"
     "@types/node": "npm:^20.0.0"
+    "@types/tar": "npm:^7.0.87"
     chalk: "npm:^5.3.0"
     commander: "npm:^12.0.0"
     eslint: "npm:^9.9.0"
@@ -4136,6 +4146,7 @@ __metadata:
     jest: "npm:^29.7.0"
     ora: "npm:^8.0.0"
     prettier: "npm:^3.2.0"
+    tar: "npm:^7.5.20"
     ts-jest: "npm:^29.1.0"
     typescript: "npm:^5.4.0"
     typescript-eslint: "npm:^8.0.0"
@@ -4437,7 +4448,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tar@npm:^7.5.4":
+"tar@npm:*, tar@npm:^7.5.20, tar@npm:^7.5.4":
   version: 7.5.20
   resolution: "tar@npm:7.5.20"
   dependencies:

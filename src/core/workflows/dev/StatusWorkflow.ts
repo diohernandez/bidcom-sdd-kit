@@ -3,6 +3,7 @@ import fs from "fs-extra";
 import { fileExists } from "../../../utils/fs.js";
 import { parseFrontmatter } from "../../../utils/frontmatter.js";
 import type { SddConfig } from "../../../types/config.js";
+import type { StateData } from "../../../core/state/types.js";
 
 export interface TaskCounts {
   total: number;
@@ -41,10 +42,27 @@ function countTasks(content: string): TaskCounts {
   return { total: taskLines.length, done };
 }
 
-async function readFeatureSummary(
+async function readStateSummary(
   featurePath: string,
   featureName: string,
 ): Promise<FeatureSummary | null> {
+  const statePath = path.join(featurePath, "state.json");
+  if (await fileExists(statePath)) {
+    const data = (await fs.readJson(statePath)) as StateData;
+    const summary: FeatureSummary = {
+      featureName,
+      state: data.state,
+      createdAt: data.created_at,
+      createdBy: data.created_by,
+    };
+    const taskListPath = path.join(featurePath, "3-tasks", "task-list.md");
+    if (await fileExists(taskListPath)) {
+      summary.tasks = countTasks(await fs.readFile(taskListPath, "utf-8"));
+    }
+    return summary;
+  }
+
+  // Fallback a meta.md legacy (features creados antes de T11.1).
   const metaPath = path.join(featurePath, "meta.md");
   if (!(await fileExists(metaPath))) return null;
 
@@ -74,7 +92,7 @@ export class StatusWorkflow {
     const wipPath = path.join(projectPath, config.wipPath);
 
     if (featureName) {
-      const feature = await readFeatureSummary(
+      const feature = await readStateSummary(
         path.join(wipPath, featureName),
         featureName,
       );
@@ -98,7 +116,7 @@ export class StatusWorkflow {
 
     const features: FeatureSummary[] = [];
     for (const name of featureNames) {
-      const summary = await readFeatureSummary(path.join(wipPath, name), name);
+      const summary = await readStateSummary(path.join(wipPath, name), name);
       if (summary) features.push(summary);
     }
 

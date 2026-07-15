@@ -4,7 +4,9 @@ import path from 'node:path'
 import fs from 'fs-extra'
 import { PlanWorkflow } from '../../../src/core/workflows/dev/PlanWorkflow.js'
 import { StatusWorkflow } from '../../../src/core/workflows/dev/StatusWorkflow.js'
+import { renderMetaMd } from '../../../src/core/state/index.js'
 import type { SddConfig } from '../../../src/types/config.js'
+import type { StateData } from '../../../src/core/state/types.js'
 
 describe('core/workflows/dev/StatusWorkflow', () => {
   let inputProjectPath: string
@@ -118,9 +120,13 @@ describe('core/workflows/dev/StatusWorkflow', () => {
         config: inputConfig,
         author: { name: 'diohernandez' },
       })
-      const secondMetaPath = path.join(inputProjectPath, '.sdd', 'wip', 'search-bar', 'meta.md')
-      const meta = await fs.readFile(secondMetaPath, 'utf-8')
-      await fs.writeFile(secondMetaPath, meta.replace('state: "funcional"', 'state: "tecnico"'))
+      const secondFeaturePath = path.join(inputProjectPath, '.sdd', 'wip', 'search-bar')
+      const secondStatePath = path.join(secondFeaturePath, 'state.json')
+      const data = (await fs.readJson(secondStatePath)) as StateData
+      data.state = 'tecnico'
+      data.last_updated = new Date().toISOString()
+      await fs.writeJson(secondStatePath, data, { spaces: 2 })
+      await renderMetaMd(secondFeaturePath)
 
       const actualResult = await statusWorkflow.execute({
         projectPath: inputProjectPath,

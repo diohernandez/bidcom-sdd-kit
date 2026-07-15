@@ -3,9 +3,11 @@ import fs from "fs-extra";
 import { fileExists, mkdirp } from "../../../utils/fs.js";
 import { TemplateLoader } from "../../../services/templates/TemplateLoader.js";
 import { TemplateRenderer } from "../../../services/templates/TemplateRenderer.js";
+import { State } from "../../../core/state/index.js";
 import type { SddConfig } from "../../../types/config.js";
 import type { DetectedStack } from "../../../types/stack.js";
 import type { WorkflowResult } from "../../../types/workflow.js";
+import type { StackDetected } from "../../../core/state/types.js";
 
 export interface PlanAuthor {
   name: string;
@@ -75,10 +77,21 @@ export class PlanWorkflow {
       path.join(featurePath, "3-tasks", "task-list.md"),
       this.templateRenderer.render(templates.taskList, variables),
     );
-    await fs.writeFile(
-      path.join(featurePath, "meta.md"),
-      this.templateRenderer.render(templates.meta, variables),
-    );
+
+    const stackDetected: StackDetected = {
+      ...config.stack,
+      ui_library: config.stack.framework?.includes("shadcn")
+        ? "Radix UI + shadcn"
+        : "",
+    };
+
+    await new State(featurePath).init({
+      featureName,
+      createdBy: author.name,
+      createdByEmail: author.email,
+      stackDetected,
+      domain: config.domain,
+    });
 
     return {
       success: true,

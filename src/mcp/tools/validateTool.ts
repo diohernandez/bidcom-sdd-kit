@@ -1,5 +1,6 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { ValidateWorkflow } from "../../core/workflows/dev/ValidateWorkflow.js";
+import { createTelemetryEmitter } from "../../core/telemetry/index.js";
 import { loadConfig } from "../../utils/config.js";
 import {
   contractResult,
@@ -25,7 +26,10 @@ export async function runValidateTool(
     return notInitializedContract();
   }
 
-  const result = await new ValidateWorkflow().execute({
+  const telemetry = config.telemetry
+    ? createTelemetryEmitter(projectPath, config.telemetry)
+    : undefined;
+  const result = await new ValidateWorkflow(undefined, telemetry).execute({
     featureName,
     projectPath,
     config,
