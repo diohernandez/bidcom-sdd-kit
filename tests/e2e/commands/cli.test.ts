@@ -210,10 +210,75 @@ describe("cli", () => {
     expect(result.stdout).toMatch(/project-b/);
   });
 
-  it("mcp-server reports it is not implemented yet", async () => {
-    const result = await runCli(["mcp-server"]);
+  it("status reports no features when wip is empty", async () => {
+    await runCli(["init"]);
+
+    const result = await runCli(["status"]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(result.stdout).toMatch(/No hay features en progreso/);
+  });
+
+  it("reverse status reports no projects when reverse is empty", async () => {
+    await runCli(["init"]);
+
+    const result = await runCli(["reverse", "status"]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(result.stdout).toMatch(/No hay proyectos de reverse engineering/);
+  });
+
+  it("validate fails when the feature does not exist", async () => {
+    await runCli(["init"]);
+
+    const result = await runCli(["validate", "missing-feature"]);
 
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toMatch(/Fase 7/);
+    expect(result.stderr).toMatch(/no existe/);
+  });
+
+  it("build fails when the feature does not exist", async () => {
+    await runCli(["init"]);
+
+    const result = await runCli(["build", "missing-feature"]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toMatch(/no existe/);
+  });
+
+  it("build succeeds when the feature is in impl phase", async () => {
+    await runCli(["init"]);
+    await runCli(["plan", "ready-feature"]);
+    await fs.writeFile(
+      path.join(projectPath, ".sdd", "wip", "ready-feature", "meta.md"),
+      "---\nstate: impl\ncreated_at: 2026-07-15T00:00:00Z\ncreated_by: test\n---\n",
+    );
+
+    const result = await runCli(["build", "ready-feature"]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(result.stdout).toMatch(/listo para implementación/);
+  });
+
+  it("reverse validate fails when the project does not exist", async () => {
+    await runCli(["init"]);
+
+    const result = await runCli(["reverse", "validate", "missing-project"]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toMatch(/no existe/);
+  });
+
+  it("reverse init fails when the project already exists", async () => {
+    await fs.writeJson(path.join(projectPath, "package.json"), {
+      dependencies: { next: "^15.0.0" },
+    });
+    await runCli(["init"]);
+    await runCli(["reverse", "init", "legacy-app"]);
+
+    const result = await runCli(["reverse", "init", "legacy-app"]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toMatch(/ya existe/);
   });
 });

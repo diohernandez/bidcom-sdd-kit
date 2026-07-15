@@ -1,9 +1,9 @@
 export interface Template {
-  name: string
-  content: string
+  name: string;
+  content: string;
 }
 
 export type TemplateSetKey =
-  'constitution' | 'functionalSpec' | 'technicalSpec' | 'taskList' | 'meta'
+  "constitution" | "functionalSpec" | "technicalSpec" | "taskList" | "meta";
 
-export type TemplateSet = Record<TemplateSetKey, Template>
+export type TemplateSet = Record<TemplateSetKey, Template>;

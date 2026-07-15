@@ -1,3 +1,3 @@
 export function stripSemverRange(rawVersion: string): string {
-  return rawVersion.replace(/^[\^~]/, '')
+  return rawVersion.replace(/^[\^~]/, "");
 }

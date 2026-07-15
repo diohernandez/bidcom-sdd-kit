@@ -94,7 +94,7 @@ export class ReverseWorkflow {
       nextSteps: [
         `Revisar y personalizar la constitución: ${reversePath}/constitution.md`,
         `Analizar el stack tecnológico: sdd reverse analyze stack --project ${projectName}`,
-        `Ver el estado del análisis: sdd reverse status --project ${projectName}`,
+        `Ver el estado del análisis: sdd reverse status ${projectName}`,
       ],
     };
   }

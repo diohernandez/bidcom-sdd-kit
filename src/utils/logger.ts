@@ -1,17 +1,17 @@
-import chalk from 'chalk'
+import chalk from "chalk";
 
 export function info(message: string): void {
-  console.log(`${chalk.blue('ℹ')} ${message}`)
+  console.log(`${chalk.blue("ℹ")} ${message}`);
 }
 
 export function success(message: string): void {
-  console.log(`${chalk.green('✅')} ${message}`)
+  console.log(`${chalk.green("✅")} ${message}`);
 }
 
 export function warn(message: string): void {
-  console.warn(`${chalk.yellow('⚠')} ${message}`)
+  console.warn(`${chalk.yellow("⚠")} ${message}`);
 }
 
 export function error(message: string): void {
-  console.error(`${chalk.red('✖')} ${message}`)
+  console.error(`${chalk.red("✖")} ${message}`);
 }
