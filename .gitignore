@@ -1,0 +1,6 @@
+node_modules/
+dist/
+coverage/
+.yarn/
+*.log
+.DS_Store

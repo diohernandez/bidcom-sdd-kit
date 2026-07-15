@@ -1,11 +1,14 @@
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { createProgram } from "../dist/cli/createProgram.js";
 
-const packageRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
-const pkg = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf-8'))
+const program = createProgram();
 
-console.log(`sdd-kit v${pkg.version}`)
-console.log('CLI aún no implementada (Fase 6 del task-list).')
-process.exit(1)
+try {
+  await program.parseAsync(process.argv);
+} catch (error) {
+  if (error && typeof error.exitCode === "number") {
+    process.exit(error.exitCode);
+  }
+  console.error(error);
+  process.exit(1);
+}
