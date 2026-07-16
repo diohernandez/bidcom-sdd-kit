@@ -10,7 +10,10 @@ completed_tasks: 0
 
 # Lista de Tareas: {{featureName}}
 
+> Cada tarea debe declarar `**Requirements**: R-NNN` para que `sdd analyze` sea determinístico.
+
 ## Fase 1: Setup y Configuración
+
 - [ ] **Tarea 1.1**: [Descripción]
   - **Archivos**: `src/...`
   - **Requirements**: R-001
@@ -20,6 +23,7 @@ completed_tasks: 0
     - [ ] Criterio 2
 
 ## Fase 2: Entidades y Core (Clean Architecture)
+
 - [ ] **Tarea 2.1**: [Descripción]
   - **Archivos**: `src/core/entities/...`
   - **Requirements**: R-002
@@ -28,6 +32,7 @@ completed_tasks: 0
     - [ ] Criterio 1
 
 ## Fase 3: Adapters e Interactors
+
 - [ ] **Tarea 3.1**: [Descripción]
   - **Archivos**: `src/core/adapters/...`, `src/core/interactors/...`
   - **Requirements**: R-003
@@ -36,6 +41,7 @@ completed_tasks: 0
     - [ ] Criterio 1
 
 ## Fase 4: Componentes UI (TDD)
+
 - [ ] **Tarea 4.1**: Escribir test unitario para [Component]
   - **Archivos**: `src/components/[feature]/__tests__/[Component].test.tsx`
   - **Requirements**: R-004
@@ -59,6 +65,7 @@ completed_tasks: 0
     - [ ] Story visible en Storybook
 
 ## Fase 5: Custom Hooks
+
 - [ ] **Tarea 5.1**: Escribir test para use[Feature]
   - **Archivos**: `src/hooks/__tests__/use[Feature].test.ts`
   - **Requirements**: R-005
@@ -74,6 +81,7 @@ completed_tasks: 0
     - [ ] Test pasa (Green)
 
 ## Fase 6: Integración y Pages
+
 - [ ] **Tarea 6.1**: Integrar componentes en página/feature
   - **Archivos**: `src/app/...` o `src/astro/pages/...`
   - **Requirements**: R-001, R-004, R-005
@@ -82,6 +90,7 @@ completed_tasks: 0
     - [ ] Feature funcional end-to-end
 
 ## Fase 7: E2E Tests
+
 - [ ] **Tarea 7.1**: Escribir test E2E para flujo principal
   - **Archivos**: `cypress/e2e/[feature].cy.ts`
   - **Requirements**: R-001
@@ -91,6 +100,7 @@ completed_tasks: 0
     - [ ] APIs mockeadas
 
 ## Fase 8: Documentación y Review
+
 - [ ] **Tarea 8.1**: Actualizar documentación
   - **Archivos**: `README.md`, `docs/...`
   - **Requirements**: Ninguno (documentación transversal)

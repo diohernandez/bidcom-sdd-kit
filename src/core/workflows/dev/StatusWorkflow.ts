@@ -2,6 +2,7 @@ import path from "node:path";
 import fs from "fs-extra";
 import { fileExists } from "../../../utils/fs.js";
 import { parseFrontmatter } from "../../../utils/frontmatter.js";
+import { parseTasks } from "../../analyze/parsers.js";
 import type { SddConfig } from "../../../types/config.js";
 import type { StateData } from "../../../core/state/types.js";
 
@@ -33,13 +34,11 @@ export interface StatusResult {
 }
 
 function countTasks(content: string): TaskCounts {
-  const taskLines = content
+  const tasks = parseTasks(content);
+  const done = content
     .split("\n")
-    .filter((line) => /^-\s\[[ x]\]\s\*\*Tarea/.test(line));
-  const done = taskLines.filter((line) =>
-    /^-\s\[x\]\s\*\*Tarea/.test(line),
-  ).length;
-  return { total: taskLines.length, done };
+    .filter((line) => /^\s*-\s*\[x\]/.test(line)).length;
+  return { total: tasks.length, done };
 }
 
 async function readStateSummary(

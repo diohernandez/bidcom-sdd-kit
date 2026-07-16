@@ -109,7 +109,27 @@ Próximos pasos:
 ❌ El feature está en estado "tasks". Necesitás aprobar el plan primero: sdd approve login-v2
 ```
 
-> El comando `sdd approve` todavía no está implementado. En proyectos reales, el estado se actualiza manualmente editando `meta.md` o con el flujo de aprobación del equipo.
+---
+
+## `sdd approve <feature>`
+
+Aprueba el plan de un feature en fase `tasks` y lo mueve a fase `impl`.
+
+```bash
+sdd approve login-v2
+```
+
+### Output esperado
+
+```
+✅ SDD KIT - Approve
+✅ Feature "login-v2" aprobado (número de aprobación: 1)
+```
+
+### Errores comunes
+
+- `El feature "X" está en fase "Y" — solo se puede aprobar desde "tasks"`.
+- `El actor "X" ya aprobó este feature`.
 
 ---
 
@@ -133,6 +153,7 @@ sdd validate login-v2
   - `### 3.2 Criterios de Aceptación`
   - `## 4. Casos de Uso`
 - Ausencia de placeholders (`_¿Qué problema...`, `- [ ] Objetivo 1`, `**Como** [rol]`, `_¿Container...`).
+- Cobertura de requisitos: cada `R-NNN` debe estar mencionado en al menos una tarea de `task-list.md`.
 
 **Fase `tecnico`** (`2-technical/spec.md`):
 
@@ -143,6 +164,13 @@ sdd validate login-v2
   - `## 4. Gestión de Estado`
   - `## 5. Estrategia de Testing`
 - Ausencia de placeholders en el patrón principal.
+- Cobertura de requisitos funcionales.
+
+**Fase `impl`** (`3-tasks/task-list.md` + implementation):
+
+- Progreso de tareas completadas vs. totales.
+- `gate-result.json` con al menos un análisis exitoso.
+- Tests, lint, types y build según el stack.
 
 ### Output esperado
 
@@ -152,6 +180,99 @@ sdd validate login-v2
   ✅ section:## 2. Objetivos
   ...
 ✅ Feature "login-v2" válido (fase: funcional)
+```
+
+### Códigos de salida
+
+| Código | Significado |
+|--------|-------------|
+| `0` | Validación exitosa |
+| `1` | Error de ejecución |
+| `2` | Validación fallida con errores críticos |
+| `3` | Validación pasada con advertencias |
+
+---
+
+## `sdd analyze <feature>`
+
+Analiza el estado de un feature en fase `impl` y produce un resumen determinístico basado en `state.json` y `gate-result.json`.
+
+```bash
+sdd analyze login-v2
+```
+
+### Output esperado
+
+```
+📊 SDD KIT - Analyze
+📋 Feature: login-v2
+   Fase: impl
+   Progreso: 5 / 8 tareas
+   Gate: 1 aprobado, 0 rechazado
+   Status: in-progress
+```
+
+### Códigos de salida
+
+| Código | Significado |
+|--------|-------------|
+| `0` | Feature completado y aprobado |
+| `2` | Feature fallido o no aprobado |
+| `1` | Error de ejecución |
+
+---
+
+## `sdd done <feature>`
+
+Marca un feature como completado y lo archiva en `.sdd/archive/<feature>/`.
+
+```bash
+sdd done login-v2
+```
+
+### Output esperado
+
+```
+🎉 SDD KIT - Done
+✅ Feature "login-v2" completado y archivado en .sdd/archive/login-v2
+```
+
+### Prerequisitos
+
+- El feature debe estar en fase `impl`.
+- Debe existir `gate-result.json` con al menos una aprobación y ningún rechazo.
+- Debe tener todas las tareas completadas.
+
+---
+
+## `sdd archive <feature>`
+
+Mueve manualmente un feature a `.sdd/archive/<feature>/`, sin importar su estado.
+
+```bash
+sdd archive login-v2
+```
+
+> Útil para descartar features o limpiar WIP. No ejecuta validaciones.
+
+---
+
+## `sdd specs-search <feature>`
+
+Busca menciones de `R-NNN` en el spec funcional y el task-list, y reporta requisitos sin tareas asociadas.
+
+```bash
+sdd specs-search login-v2
+```
+
+### Output esperado
+
+```
+🔍 SDD KIT - Specs Search
+📋 Feature: login-v2
+  ✅ R-001 — cubierto por T1.1
+  ✅ R-002 — cubierto por T2.1
+  ❌ R-007 — sin tareas asociadas
 ```
 
 ---
@@ -344,8 +465,8 @@ Más detalles en [`MCP.md`](MCP.md).
 
 | Comando | Estado |
 |---------|--------|
-| `sdd approve <feature>` | Pendiente (Fase 11). Actualmente el estado se transiciona manualmente editando `meta.md`. |
 | `sdd init --stack <stack>` | No soportado. El stack siempre se auto-detecta. |
+| `sdd resume` | No soportado. Reanudar un feature se hace manualmente editando `state.json` o `meta.md`. |
 
 ---
 
@@ -353,4 +474,9 @@ Más detalles en [`MCP.md`](MCP.md).
 
 - Los nombres de feature y proyectos de reverse engineering usan **kebab-case**.
 - Todos los comandos que requieren un proyecto inicializado devuelven un error claro si falta `.sdd/config.yml`.
-- Los códigos de salida siguen la convención Unix: `0` para éxito, `1` para error.
+- Los códigos de salida siguen la convención Unix:
+  - `0` éxito.
+  - `1` error de ejecución.
+  - `2` validación/análisis fallido.
+  - `3` validación pasada con advertencias.
+- `state.json` es la fuente de verdad del estado; `meta.md` es una vista legible generada automáticamente.

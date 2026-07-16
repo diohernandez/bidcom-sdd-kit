@@ -125,7 +125,30 @@ Verifica que el feature esté listo para implementación.
 }
 ```
 
-> `sdd approve` todavía no está implementado como comando CLI. El campo `next_action` refleja el flujo completo previsto en la especificación.
+### `sdd_approve`
+
+Aprueba el plan de un feature y lo pasa a fase `impl`.
+
+**Input schema**
+
+```json
+{
+  "featureName": "login-v2"
+}
+```
+
+**Output (éxito)**
+
+```json
+{
+  "state": "impl",
+  "next_action": {
+    "command": "sdd build login-v2",
+    "description": "Implementar siguiendo TDD y correr sdd validate"
+  },
+  "blockers": []
+}
+```
 
 ### `sdd_validate`
 
@@ -198,6 +221,18 @@ Ejecuta una fase de análisis de ingeniería inversa.
 
 Valores permitidos para `phase`: `stack`, `architecture`, `integration`, `components`, `data-flow`, `testing`.
 
+**Opcional: `seedSpecs`**
+
+Podés pasar un string con requisitos funcionales de referencia para guiar la arquitectura o componentes:
+
+```json
+{
+  "phase": "architecture",
+  "projectName": "legacy-app",
+  "seedSpecs": "R-001: Login por email\nR-002: OAuth2"
+}
+```
+
 **Output (éxito)**
 
 ```json
@@ -208,6 +243,86 @@ Valores permitidos para `phase`: `stack`, `architecture`, `integration`, `compon
     "description": "Ver el estado del análisis"
   },
   "blockers": []
+}
+```
+
+### `sdd_analyze`
+
+Analiza un feature en fase `impl` y devuelve un resumen determinístico.
+
+**Input schema**
+
+```json
+{
+  "featureName": "login-v2"
+}
+```
+
+**Output (éxito)**
+
+```json
+{
+  "state": "impl",
+  "next_action": {
+    "command": "sdd validate login-v2",
+    "description": "Continuar implementación o validar"
+  },
+  "blockers": []
+}
+```
+
+### `sdd_done`
+
+Marca un feature como completado y lo archiva.
+
+**Input schema**
+
+```json
+{
+  "featureName": "login-v2"
+}
+```
+
+**Prerequisitos**: fase `impl`, todas las tareas completadas, `gate-result.json` aprobado y sin rechazos.
+
+**Output (éxito)**
+
+```json
+{
+  "state": "done",
+  "next_action": null,
+  "blockers": []
+}
+```
+
+### `sdd_specs_search`
+
+Busca cobertura de requisitos entre el spec funcional y el task-list.
+
+**Input schema**
+
+```json
+{
+  "featureName": "login-v2"
+}
+```
+
+**Output (con requisitos sin cubrir)**
+
+```json
+{
+  "state": "impl",
+  "next_action": {
+    "command": "sdd specs-search login-v2",
+    "description": "Agregar tareas para cubrir los requisitos faltantes"
+  },
+  "blockers": [
+    {
+      "gate": "specs",
+      "check": "R-007",
+      "detail": "Requisito R-007 no está asociado a ninguna tarea"
+    }
+  ]
 }
 ```
 
@@ -316,7 +431,13 @@ interface ToolContract {
 
 ### Implementación actual
 
-El contrato se deriva interinamente de `meta.md` (frontmatter `state`) y de los checks de `ValidateWorkflow`. En la Fase 11 del plan se reemplazará por la fuente de verdad `state.json`/`gate-result.json`, que aún no está implementada.
+El contrato se construye leyendo `state.json` y `gate-result.json` reales del feature:
+
+- `state` viene del campo `state` de `state.json`.
+- `next_action` se decide a partir de la fase actual y el resultado de la última gate.
+- `blockers` se extraen de `gate-result.json` (`checks` con `status: "blocked"` o `"failed"`) y de validaciones adicionales como specs search.
+
+Esto elimina el parseo frágil de `meta.md` y garantiza que el estado visto por el agente MCP sea el mismo que el CLI.
 
 ---
 
@@ -347,4 +468,4 @@ Claude: [lee resource sdd://status]
 
 - El servidor no ejecuta código arbitrario del proyecto.
 - Las tools solo leen/escriben dentro de `.sdd/`, `specs/` y archivos de manifiesto (`package.json`, `pyproject.toml`, etc.) necesarios para análisis.
-- No escribir en `stdout` desde el proceso del servidor puede romper el protocolo MCP.
+- El comando `sdd mcp-server` no imprime banners ni logs en `stdout` para no romper el protocolo MCP.

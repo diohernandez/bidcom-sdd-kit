@@ -284,7 +284,7 @@ describe("cli", () => {
     expect(result.stderr).toMatch(/ya existe/);
   });
 
-  it("analyze reports traceability issues for a feature with orphan requirements", async () => {
+  it("analyze reports traceability issues for a feature with incomplete requirements", async () => {
     await runCli(["init"]);
     await runCli(["plan", "checkout-flow"]);
     const featurePath = path.join(projectPath, ".sdd", "wip", "checkout-flow");
@@ -309,7 +309,7 @@ describe("cli", () => {
     const result = await runCli(["analyze", "checkout-flow"]);
 
     expect(result.exitCode).toBe(1);
-    expect(result.stdout).toMatch(/requirement-orphan/);
+    expect(result.stdout).toMatch(/task-orphan|task-unknown-requirement/);
   });
 
   it("approve moves a feature from tasks to impl", async () => {

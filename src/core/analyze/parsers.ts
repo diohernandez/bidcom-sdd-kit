@@ -38,14 +38,26 @@ function parseTaskRequirements(line: string): string[] {
 }
 
 export function parseTaskLine(line: string): { id: string; title: string } | undefined {
-  const match = line.match(/^\|\s*([^\s|][^|]*?)\s*\|\s*([^|]+?)\s*\|/);
-  if (!match) return undefined;
-  const id = match[1].trim();
-  const title = match[2].trim();
-  if (/^(ID|Tarea|Task|#)$/i.test(id)) return undefined;
-  if (/^[-:]+$/.test(id)) return undefined;
-  if (/^[-:]+$/.test(title)) return undefined;
-  return { id, title };
+  // Table format: | T1.1 | Title | ... |
+  const tableMatch = line.match(/^\|\s*([^\s|][^|]*?)\s*\|\s*([^|]+?)\s*\|/);
+  if (tableMatch) {
+    const id = tableMatch[1].trim();
+    const title = tableMatch[2].trim();
+    if (/^(ID|Tarea|Task|#)$/i.test(id)) return undefined;
+    if (/^[-:]+$/.test(id)) return undefined;
+    if (/^[-:]+$/.test(title)) return undefined;
+    return { id, title };
+  }
+
+  // Bullet format: - [ ] **Tarea 1.1**: Title
+  const bulletMatch = line.match(/^-\s*\[[ x]\]\s*\*\*Tarea\s+(\S+)\*\*\s*:\s*(.+?)$/);
+  if (bulletMatch) {
+    const id = bulletMatch[1].trim();
+    const title = bulletMatch[2].trim();
+    return { id, title };
+  }
+
+  return undefined;
 }
 
 export function parseTasks(content: string): Task[] {
