@@ -16,6 +16,7 @@ export async function generateSpecsIndex(
   const store = createSpecStore(projectPath);
   const capabilities = await store.list();
   const indexPath = path.join(projectPath, specsPath, "index.md");
+  await fs.ensureDir(path.dirname(indexPath));
 
   const lines = [
     "---",
@@ -45,6 +46,7 @@ export async function appendSpecsLog(
   entry: SpecsLogEntry,
 ): Promise<void> {
   const logPath = path.join(projectPath, specsPath, "log.md");
+  await fs.ensureDir(path.dirname(logPath));
   const previous = (await fileExists(logPath))
     ? await fs.readFile(logPath, "utf-8")
     : "# Specs Log\n\n";

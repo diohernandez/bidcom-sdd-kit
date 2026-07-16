@@ -7,8 +7,12 @@ import { registerPlanCommand } from "./commands/plan.js";
 import { registerBuildCommand } from "./commands/build.js";
 import { registerValidateCommand } from "./commands/validate.js";
 import { registerStatusCommand } from "./commands/status.js";
+import { registerAnalyzeCommand } from "./commands/analyze.js";
+import { registerApproveCommand } from "./commands/approve.js";
+import { registerDoneCommand, registerArchiveCommand } from "./commands/done.js";
 import { registerReverseCommand } from "./commands/reverse.js";
 import { registerMcpServerCommand } from "./commands/mcpServer.js";
+import { registerSpecsSearchCommand } from "./commands/specsSearch.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -34,6 +38,11 @@ export function createProgram(): Command {
   registerBuildCommand(program);
   registerValidateCommand(program);
   registerStatusCommand(program);
+  registerAnalyzeCommand(program);
+  registerApproveCommand(program);
+  registerDoneCommand(program);
+  registerArchiveCommand(program);
+  registerSpecsSearchCommand(program);
   registerReverseCommand(program);
   registerMcpServerCommand(program);
 

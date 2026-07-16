@@ -6,6 +6,7 @@ import { IntegrationPhase } from "../../core/workflows/reverse/phases/Integratio
 import { ComponentsPhase } from "../../core/workflows/reverse/phases/ComponentsPhase.js";
 import { DataFlowPhase } from "../../core/workflows/reverse/phases/DataFlowPhase.js";
 import { TestingPhase } from "../../core/workflows/reverse/phases/TestingPhase.js";
+import { SeedSpecsPhase } from "../../core/workflows/reverse/phases/SeedSpecsPhase.js";
 import { fileExists } from "../../utils/fs.js";
 import { getGitActor } from "../../utils/gitActor.js";
 import { loadConfig } from "../../utils/config.js";
@@ -19,7 +20,8 @@ export type ReverseAnalyzePhase =
   | "integration"
   | "components"
   | "data-flow"
-  | "testing";
+  | "testing"
+  | "seed-specs";
 
 export interface ReverseAnalyzeToolInput {
   phase: ReverseAnalyzePhase;
@@ -43,6 +45,7 @@ const PHASE_CLASSES: Record<ReverseAnalyzePhase, new () => AnalysisPhase> = {
   components: ComponentsPhase,
   "data-flow": DataFlowPhase,
   testing: TestingPhase,
+  "seed-specs": SeedSpecsPhase,
 };
 
 export async function runReverseAnalyzeTool(

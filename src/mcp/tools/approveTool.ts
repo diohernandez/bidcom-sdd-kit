@@ -1,20 +1,20 @@
 import path from "node:path";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { BuildWorkflow } from "../../core/workflows/dev/BuildWorkflow.js";
+import { ApproveWorkflow } from "../../core/workflows/dev/ApproveWorkflow.js";
+import { getGitActor } from "../../utils/gitActor.js";
 import { loadConfig } from "../../utils/config.js";
 import {
   buildContractFromState,
   contractResult,
-  nextActionForDevPhase,
   notInitializedContract,
 } from "../contract.js";
 
-export interface BuildToolInput {
+export interface ApproveToolInput {
   featureName: string;
 }
 
-export async function runBuildTool(
-  input: BuildToolInput,
+export async function runApproveTool(
+  input: ApproveToolInput,
   { projectPath }: { projectPath: string },
 ): Promise<CallToolResult> {
   const { featureName } = input;
@@ -26,26 +26,28 @@ export async function runBuildTool(
     return notInitializedContract();
   }
 
-  const result = await new BuildWorkflow().execute({
+  const actor = getGitActor({ cwd: projectPath });
+  const result = await new ApproveWorkflow().execute({
     featureName,
     projectPath,
     config,
+    actor: actor.name,
+    email: actor.email,
   });
 
   const featurePath = path.join(projectPath, config.wipPath, featureName);
+  const contract = await buildContractFromState(featurePath, featureName);
 
   if (!result.success) {
-    const contract = await buildContractFromState(featurePath, featureName);
     return contractResult(
       {
         ...contract,
         blockers: [
           ...contract.blockers,
           {
-            gate: "build",
+            gate: "approve",
             check: "precondition",
-            detail:
-              result.error ?? "El feature no está listo para implementación",
+            detail: result.error ?? "No se pudo aprobar el feature",
           },
         ],
       },
@@ -53,13 +55,5 @@ export async function runBuildTool(
     );
   }
 
-  if (result.phase === "impl") {
-    return contractResult({
-      state: "impl",
-      next_action: nextActionForDevPhase("impl", featureName),
-      blockers: [],
-    });
-  }
-
-  return contractResult(await buildContractFromState(featurePath, featureName));
+  return contractResult(contract);
 }

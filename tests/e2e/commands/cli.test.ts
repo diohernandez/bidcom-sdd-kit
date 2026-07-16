@@ -283,4 +283,80 @@ describe("cli", () => {
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toMatch(/ya existe/);
   });
+
+  it("analyze reports traceability issues for a feature with orphan requirements", async () => {
+    await runCli(["init"]);
+    await runCli(["plan", "checkout-flow"]);
+    const featurePath = path.join(projectPath, ".sdd", "wip", "checkout-flow");
+    await fs.ensureDir(path.join(featurePath, "delta"));
+    await fs.writeFile(
+      path.join(featurePath, "delta", "header.md"),
+      [
+        "---",
+        "type: capability-delta",
+        "capability: header",
+        "change_ref: checkout-flow",
+        "---",
+        "",
+        "## ADDED Requirements",
+        "",
+        "#### Requirement: R-001 — Buscador",
+        "El buscador debe funcionar.",
+        "",
+      ].join("\n"),
+    );
+
+    const result = await runCli(["analyze", "checkout-flow"]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toMatch(/requirement-orphan/);
+  });
+
+  it("approve moves a feature from tasks to impl", async () => {
+    await runCli(["init"]);
+    await runCli(["plan", "checkout-flow"]);
+    const featurePath = path.join(projectPath, ".sdd", "wip", "checkout-flow");
+    const statePath = path.join(featurePath, "state.json");
+    const stateContent = await fs.readJson(statePath);
+    stateContent.state = "tasks";
+    stateContent.last_updated = "2026-07-15T00:00:00Z";
+    await fs.writeJson(statePath, stateContent, { spaces: 2 });
+
+    const result = await runCli(["approve", "checkout-flow"]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(result.stdout).toMatch(/aprobado/);
+    const updatedState = await fs.readJson(statePath);
+    expect(updatedState.state).toBe("impl");
+  });
+
+  it("done archives a feature from impl", async () => {
+    await runCli(["init"]);
+    await runCli(["plan", "ready-feature"]);
+    const featurePath = path.join(projectPath, ".sdd", "wip", "ready-feature");
+    const statePath = path.join(featurePath, "state.json");
+    const stateContent = await fs.readJson(statePath);
+    stateContent.state = "impl";
+    stateContent.last_updated = "2026-07-15T00:00:00Z";
+    await fs.writeJson(statePath, stateContent, { spaces: 2 });
+
+    const result = await runCli(["done", "ready-feature"]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(result.stdout).toMatch(/cerrado/);
+    expect(
+      await fs.pathExists(
+        path.join(projectPath, ".sdd", "archive", "ready-feature"),
+      ),
+    ).toBe(true);
+  });
+
+  it("specs-search reports no results when specs is empty", async () => {
+    await runCli(["init"]);
+
+    const result = await runCli(["specs-search", "header"]);
+
+    expect(result.exitCode).toBeUndefined();
+    expect(result.stdout).toMatch(/No se encontraron/);
+  });
 });

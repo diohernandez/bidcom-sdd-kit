@@ -4,6 +4,10 @@ import { z } from "zod";
 import { runPlanTool } from "./tools/planTool.js";
 import { runBuildTool } from "./tools/buildTool.js";
 import { runValidateTool } from "./tools/validateTool.js";
+import { runAnalyzeTool } from "./tools/analyzeTool.js";
+import { runApproveTool } from "./tools/approveTool.js";
+import { runDoneTool } from "./tools/doneTool.js";
+import { runSpecsSearchTool } from "./tools/specsSearchTool.js";
 import { runReverseInitTool } from "./tools/reverseInitTool.js";
 import { runReverseAnalyzeTool } from "./tools/reverseAnalyzeTool.js";
 import { registerStatusResource } from "./resources/statusResource.js";
@@ -59,6 +63,50 @@ export function createSddMcpServer(
   );
 
   server.registerTool(
+    "sdd_analyze",
+    {
+      description: "Analizar trazabilidad historias ↔ requirements ↔ tareas",
+      inputSchema: {
+        featureName: z.string().describe("Nombre del feature (kebab-case)"),
+      },
+    },
+    (args) => runAnalyzeTool(args, { projectPath }),
+  );
+
+  server.registerTool(
+    "sdd_approve",
+    {
+      description: "Aprobar un feature y moverlo a impl",
+      inputSchema: {
+        featureName: z.string().describe("Nombre del feature (kebab-case)"),
+      },
+    },
+    (args) => runApproveTool(args, { projectPath }),
+  );
+
+  server.registerTool(
+    "sdd_done",
+    {
+      description: "Cerrar un feature, mergear deltas y archivar",
+      inputSchema: {
+        featureName: z.string().describe("Nombre del feature (kebab-case)"),
+      },
+    },
+    (args) => runDoneTool(args, { projectPath }),
+  );
+
+  server.registerTool(
+    "sdd_specs_search",
+    {
+      description: "Buscar sobre specs/ por texto o tag",
+      inputSchema: {
+        query: z.string().describe("Texto a buscar"),
+      },
+    },
+    (args) => runSpecsSearchTool(args, { projectPath }),
+  );
+
+  server.registerTool(
     "sdd_reverse_init",
     {
       description: "Iniciar un análisis de ingeniería inversa",
@@ -82,6 +130,7 @@ export function createSddMcpServer(
             "components",
             "data-flow",
             "testing",
+            "seed-specs",
           ])
           .describe("Fase de análisis a ejecutar"),
         projectName: z

@@ -41,15 +41,19 @@ describe("sdd-kit MCP server (in-process, InMemoryTransport)", () => {
     await fs.remove(projectPath);
   });
 
-  it("lists the five authoritative dev/reverse tools (status reads stay resources, not tools)", async () => {
+  it("lists the authoritative dev/reverse tools (status reads stay resources, not tools)", async () => {
     const { tools } = await client.listTools();
     const names = tools.map((tool) => tool.name).sort();
 
     expect(names).toEqual([
+      "sdd_analyze",
+      "sdd_approve",
       "sdd_build",
+      "sdd_done",
       "sdd_plan",
       "sdd_reverse_analyze",
       "sdd_reverse_init",
+      "sdd_specs_search",
       "sdd_validate",
     ]);
   });
@@ -93,6 +97,61 @@ describe("sdd-kit MCP server (in-process, InMemoryTransport)", () => {
     });
     expect(analyzeResult.isError).toBe(false);
     expect(parseTextContent(analyzeResult)).toMatchObject({ state: "stack" });
+  });
+
+  it("drives sdd_plan -> sdd_analyze -> sdd_approve workflow", async () => {
+    const planResult = await client.callTool({
+      name: "sdd_plan",
+      arguments: { featureName: "checkout-flow" },
+    });
+    expect(planResult.isError).toBe(false);
+
+    const featurePath = path.join(
+      projectPath,
+      ".sdd",
+      "wip",
+      "checkout-flow",
+    );
+    await fs.ensureDir(path.join(featurePath, "delta"));
+    await fs.writeFile(
+      path.join(featurePath, "delta", "header.md"),
+      [
+        "---",
+        "type: capability-delta",
+        "capability: header",
+        "change_ref: checkout-flow",
+        "---",
+        "",
+        "## ADDED Requirements",
+        "",
+        "#### Requirement: R-001 — Buscador",
+        "El buscador debe funcionar.",
+        "",
+      ].join("\n"),
+    );
+
+    const analyzeResult = await client.callTool({
+      name: "sdd_analyze",
+      arguments: { featureName: "checkout-flow" },
+    });
+    expect(analyzeResult.isError).toBe(true);
+    expect(
+      (parseTextContent(analyzeResult) as { blockers: unknown[] }).blockers
+        .length,
+    ).toBeGreaterThan(0);
+
+    const statePath = path.join(featurePath, "state.json");
+    const state = await fs.readJson(statePath);
+    state.state = "tasks";
+    state.last_updated = new Date().toISOString();
+    await fs.writeJson(statePath, state, { spaces: 2 });
+
+    const approveResult = await client.callTool({
+      name: "sdd_approve",
+      arguments: { featureName: "checkout-flow" },
+    });
+    expect(approveResult.isError).toBe(false);
+    expect(parseTextContent(approveResult)).toMatchObject({ state: "impl" });
   });
 
   it("reads sdd://status with the aggregated feature list", async () => {

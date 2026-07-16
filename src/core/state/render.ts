@@ -3,8 +3,8 @@ import fs from "fs-extra";
 import { fileExists } from "../../utils/fs.js";
 import type { StateData, StateTransition, StateApproval } from "./types.js";
 
-function escapeTableCell(value: string): string {
-  return value.replace(/\|/g, "\\|");
+function escapeTableCell(value: string | undefined): string {
+  return (value ?? "").replace(/\|/g, "\\|");
 }
 
 function renderContributors(data: StateData): string {

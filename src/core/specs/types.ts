@@ -40,6 +40,18 @@ export interface MergeResult {
   };
 }
 
+export interface SpecsSearchResult {
+  capability: string;
+  title: string;
+  matches: string[];
+}
+
+export interface SpecsSearchOptions {
+  projectPath: string;
+  specsPath: string;
+  query: string;
+}
+
 export interface SpecStore {
   read(capability: string): Promise<CapabilitySpec | undefined>;
   write(spec: CapabilitySpec): Promise<void>;

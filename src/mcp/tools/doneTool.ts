@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { BuildWorkflow } from "../../core/workflows/dev/BuildWorkflow.js";
+import { DoneWorkflow } from "../../core/workflows/dev/DoneWorkflow.js";
 import { loadConfig } from "../../utils/config.js";
 import {
   buildContractFromState,
@@ -9,12 +9,12 @@ import {
   notInitializedContract,
 } from "../contract.js";
 
-export interface BuildToolInput {
+export interface DoneToolInput {
   featureName: string;
 }
 
-export async function runBuildTool(
-  input: BuildToolInput,
+export async function runDoneTool(
+  input: DoneToolInput,
   { projectPath }: { projectPath: string },
 ): Promise<CallToolResult> {
   const { featureName } = input;
@@ -26,15 +26,14 @@ export async function runBuildTool(
     return notInitializedContract();
   }
 
-  const result = await new BuildWorkflow().execute({
+  const result = await new DoneWorkflow().execute({
     featureName,
     projectPath,
     config,
   });
 
-  const featurePath = path.join(projectPath, config.wipPath, featureName);
-
   if (!result.success) {
+    const featurePath = path.join(projectPath, config.wipPath, featureName);
     const contract = await buildContractFromState(featurePath, featureName);
     return contractResult(
       {
@@ -42,10 +41,9 @@ export async function runBuildTool(
         blockers: [
           ...contract.blockers,
           {
-            gate: "build",
+            gate: "done",
             check: "precondition",
-            detail:
-              result.error ?? "El feature no está listo para implementación",
+            detail: result.error ?? "No se pudo cerrar el feature",
           },
         ],
       },
@@ -53,13 +51,9 @@ export async function runBuildTool(
     );
   }
 
-  if (result.phase === "impl") {
-    return contractResult({
-      state: "impl",
-      next_action: nextActionForDevPhase("impl", featureName),
-      blockers: [],
-    });
-  }
-
-  return contractResult(await buildContractFromState(featurePath, featureName));
+  return contractResult({
+    state: "done",
+    next_action: nextActionForDevPhase("done", featureName),
+    blockers: [],
+  });
 }

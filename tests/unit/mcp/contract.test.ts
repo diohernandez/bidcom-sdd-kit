@@ -1,5 +1,9 @@
 import { describe, it, expect } from "@jest/globals";
+import os from "node:os";
+import path from "node:path";
+import fs from "fs-extra";
 import {
+  buildContractFromState,
   contractResult,
   nextActionForDevPhase,
   notInitializedContract,
@@ -77,6 +81,60 @@ describe("contract", () => {
           detail: expect.stringContaining("sdd init"),
         },
       ]);
+    });
+  });
+
+  describe("buildContractFromState", () => {
+    it("builds a contract from state.json and gate-result.json", async () => {
+      const projectPath = await fs.mkdtemp(
+        path.join(os.tmpdir(), "sdd-kit-contract-"),
+      );
+      const featurePath = path.join(projectPath, ".sdd", "wip", "checkout-flow");
+      await fs.ensureDir(featurePath);
+      await fs.writeJson(path.join(featurePath, "state.json"), {
+        schema_version: "3.0.0",
+        feature_name: "checkout-flow",
+        state: "impl",
+        created_at: "2026-07-15T00:00:00Z",
+        created_by: "diohernandez",
+        created_by_email: "",
+        last_updated: "2026-07-15T00:00:00Z",
+        stack_detected: { language: "typescript" },
+        domain: "dev-tools",
+        contributors: [],
+        knowledge_lineage: [],
+        transitions: [],
+        approvals: [],
+        requirement_changes: [],
+        specs_baseline: { mode: null, note: null, capabilities: [] },
+        gates: { functional: null, technical: null, tasks: null },
+        archive: {
+          archived: false,
+          archived_at: null,
+          archive_path: null,
+          merged_capabilities: [],
+        },
+        extra: {},
+      });
+      await fs.writeJson(path.join(featurePath, "gate-result.json"), {
+        gate: "impl",
+        passed: false,
+        exit_code: 2,
+        checks: [
+          { name: "build", passed: false, detail: "build failed" },
+          { name: "tests", passed: true },
+        ],
+      });
+
+      const contract = await buildContractFromState(featurePath, "checkout-flow");
+
+      expect(contract.state).toBe("impl");
+      expect(contract.next_action?.command).toBe("sdd build checkout-flow");
+      expect(contract.blockers).toEqual([
+        { gate: "impl", check: "build", detail: "build failed" },
+      ]);
+
+      await fs.remove(projectPath);
     });
   });
 });
